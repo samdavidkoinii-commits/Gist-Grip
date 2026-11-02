@@ -1,4 +1,4 @@
-const API = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const API = import.meta.env.VITE_API_URL || 'https://lumiere-salon-api.onrender.com/api/v1';
 
 export async function api<T>(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem('lumiere_token');
