@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  STAFF
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  PAYSTACK
+  CARD
+  MOBILE_MONEY
+  BANK_TRANSFER
+  OTHER
+}
+
+enum RecordStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String
+  email         String    @unique
+  phone         String?
+  passwordHash  String
+  role          UserRole  @default(CUSTOMER)
+  avatar        String?
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  staff         Staff?
+  appointments  Appointment[] @relation("CustomerAppointments")
+  reviews       Review[]
+  notifications Notification[]
+  payments      Payment[]
+}
+
+model ServiceCategory {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  status      RecordStatus @default(ACTIVE)
+  services    Service[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id              Int       @id @default(autoincrement())
+  categoryId      Int
+  name            String
+  slug            String    @unique
+  description     String
+  price           Int
+  durationMinutes Int
+  image           String?
+  status          RecordStatus @default(ACTIVE)
+  category        ServiceCategory @relation(fields: [categoryId], references: [id])
+  staffServices   StaffService[]
+  appointments    Appointment[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Staff {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  bio             String?
+  position        String
+  experienceYears Int       @default(0)
+  photo           String?
+  status          RecordStatus @default(ACTIVE)
+  user            User @relation(fields: [userId], references: [id])
+  services        StaffService[]
+  appointments    Appointment[] @relation("StaffAppointments")
+  workingHours    WorkingHour[]
+  timeOff         TimeOff[]
+  reviews         Review[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model StaffService {
+  id        Int @id @default(autoincrement())
+  staffId   Int
+  serviceId Int
+  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  @@unique([staffId, serviceId])
+}
+
+model WorkingHour {
+  id          Int @id @default(autoincrement())
+  staffId     Int
+  dayOfWeek   Int
+  startTime   String
+  endTime     String
+  isAvailable Boolean @default(true)
+  staff       Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  @@unique([staffId, dayOfWeek])
+}
+
+model TimeOff {
+  id        Int @id @default(autoincrement())
+  staffId   Int
+  startAt   DateTime
+  endAt     DateTime
+  reason    String?
+  staff     Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id               Int @id @default(autoincrement())
+  bookingNumber    String    @unique
+  customerId       Int
+  staffId          Int
+  serviceId        Int
+  appointmentDate  DateTime
+  startTime        String
+  endTime          String
+  status           AppointmentStatus @default(PENDING)
+  customerNote     String?
+  adminNote        String?
+  totalAmount      Int
+  depositAmount    Int
+  balanceAmount    Int
+  customer         User @relation("CustomerAppointments", fields: [customerId], references: [id])
+  staff            Staff @relation("StaffAppointments", fields: [staffId], references: [id])
+  service          Service @relation(fields: [serviceId], references: [id])
+  payments         Payment[]
+  review           Review?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  @@index([appointmentDate, staffId])
+}
+
+model Payment {
+  id                   Int @id @default(autoincrement())
+  appointmentId        Int
+  customerId           Int
+  transactionReference String @unique
+  amount               Int
+  currency             String @default("GHS")
+  method               PaymentMethod @default(PAYSTACK)
+  status               PaymentStatus @default(PENDING)
+  gatewayResponse      Json?
+  paidAt               DateTime?
+  appointment          Appointment @relation(fields: [appointmentId], references: [id])
+  customer             User @relation(fields: [customerId], references: [id])
+  createdAt            DateTime @default(now())
+}
+
+model Review {
+  id            Int @id @default(autoincrement())
+  customerId    Int
+  appointmentId Int @unique
+  staffId       Int?
+  rating        Int
+  comment       String
+  status        RecordStatus @default(ACTIVE)
+  customer      User @relation(fields: [customerId], references: [id])
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  staff         Staff? @relation(fields: [staffId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model GalleryItem {
+  id          Int @id @default(autoincrement())
+  title       String
+  imageUrl    String
+  category    String
+  description String?
+  status      RecordStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+}
+
+model Promotion {
+  id            Int @id @default(autoincrement())
+  title         String
+  description   String
+  discountType  String
+  discountValue Int
+  startDate     DateTime
+  endDate       DateTime
+  image         String?
+  status        RecordStatus @default(ACTIVE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BlogPost {
+  id             Int @id @default(autoincrement())
+  authorId       Int
+  title          String
+  slug           String @unique
+  excerpt        String
+  content        String
+  featuredImage   String?
+  status         RecordStatus @default(ACTIVE)
+  publishedAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id        Int @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String
+  type      String
+  isRead    Boolean @default(false)
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id                     Int @id @default(autoincrement())
+  salonName              String @default("Gist & Grip Brands")
+  logo                   String?
+  email                  String?
+  phone                  String?
+  address                String?
+  openingTime            String @default("09:00")
+  closingTime            String @default("18:00")
+  currency               String @default("GHS")
+  instagram              String?
+  facebook               String?
+  tiktok                 String?
+  whatsapp               String?
+  depositPercentage      Int @default(25)
+  cancellationPolicy     String?
+  updatedAt              DateTime @updatedAt
+}

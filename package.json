@@ -1,0 +1,15 @@
+{
+  "name": "gist-grip-braids",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix frontend install && npm --prefix backend install",
+    "dev": "concurrently \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
+    "db:generate": "npm --prefix backend run prisma:generate",
+    "db:push": "npm --prefix backend run prisma:push",
+    "db:seed": "npm --prefix backend run prisma:seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

@@ -1,0 +1,2 @@
+import {Link} from 'react-router-dom';
+export default function StaffCard({staff}:{staff:any}){const name=staff.user?.name||staff.name;return <article className="staff-card"><img src={staff.photo||staff.user?.avatar} alt={name}/><div><span>{staff.position}</span><h3>{name}</h3><p>{staff.bio}</p><small>{staff.experienceYears} years experience</small><Link to="/book" className="btn btn-outline">Book with me</Link></div></article>}

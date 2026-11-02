@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lumiere
+      POSTGRES_USER: lumiere
+      POSTGRES_PASSWORD: lumiere_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - lumiere_pgdata:/var/lib/postgresql/data
+volumes:
+  lumiere_pgdata:

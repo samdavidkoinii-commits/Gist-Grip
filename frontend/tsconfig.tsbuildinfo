@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/layout.tsx","./src/components/sectiontitle.tsx","./src/components/servicecard.tsx","./src/components/staffcard.tsx","./src/lib/api.ts","./src/lib/auth.ts","./src/pages/admin.tsx","./src/pages/booking.tsx","./src/pages/home.tsx","./src/pages/pages.tsx"],"version":"5.9.3"}

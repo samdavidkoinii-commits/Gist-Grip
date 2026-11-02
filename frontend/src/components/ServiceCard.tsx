@@ -1,0 +1,2 @@
+import {Link} from 'react-router-dom';import {money} from '../lib/api';
+export default function ServiceCard({service}:{service:any}){return <article className="service-card"><img src={service.image} alt={service.name}/><div className="service-card-body"><div className="service-meta"><span>{service.category?.name||service.category}</span><b>{money(service.price)}</b></div><h3>{service.name}</h3><p>{service.description}</p><Link className="text-btn" to={`/book?service=${service.id}`}>Book now →</Link></div></article>}
