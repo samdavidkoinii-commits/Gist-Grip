@@ -35,7 +35,6 @@ router.get('/verify/:reference', async (req, res) => {
   const reference = String(req.params.reference || '');
   if (!reference) return res.status(400).json({ success: false, message: 'Payment reference is required' });
   if (!config.paystackSecret) return res.status(503).json({ success: false, message: 'Payment verification is not configured' });
-
   try {
     const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
       headers: { Authorization: `Bearer ${config.paystackSecret}` }
@@ -51,14 +50,8 @@ router.get('/verify/:reference', async (req, res) => {
       if (Number(result.data.amount) !== Math.round(Number(payment.amount) * 100) || result.data.currency !== 'GHS') {
         return res.status(400).json({ success: false, message: 'Payment amount or currency does not match' });
       }
-      await database.payment.update({
-        where: { transactionReference: reference },
-        data: { status: 'SUCCESSFUL', paidAt: new Date(), gatewayResponse: result.data }
-      });
-      await database.appointment.update({
-        where: { id: payment.appointmentId },
-        data: { status: 'CONFIRMED' }
-      });
+      await database.payment.update({ where: { transactionReference: reference }, data: { status: 'SUCCESSFUL', paidAt: new Date(), gatewayResponse: result.data } });
+      await database.appointment.update({ where: { id: payment.appointmentId }, data: { status: 'CONFIRMED' } });
     }
     return res.json({ success: true, data: { reference, status: 'SUCCESSFUL' } });
   } catch {
@@ -70,10 +63,7 @@ router.get('/:reference', requireAuth, async (req, res) => {
   if (!prisma) return res.status(503).json({ success: false, message: 'Payment records are unavailable' });
   const database = prisma;
   const reference = String(req.params.reference || '');
-  const payment = await database.payment.findUnique({
-    where: { transactionReference: reference },
-    include: { appointment: true }
-  });
+  const payment = await database.payment.findUnique({ where: { transactionReference: reference }, include: { appointment: true } });
   if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
   if (!['ADMIN', 'SUPER_ADMIN'].includes(req.user!.role) && payment.customerId !== req.user!.id) {
     return res.status(403).json({ success: false, message: 'You cannot access this payment' });
